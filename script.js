@@ -4,6 +4,7 @@ let recordBtn = document.querySelector(".record_btn");
 let captureBtnContainer = document.querySelector(".capture_btn_container");
 let captureBtn = document.querySelector(".capture_btn");
 let recordFlag = false;
+let transparentColor = "transparent";
 
 let recorder;
 let chunks = []; // Media data in chunks
@@ -26,12 +27,23 @@ navigator.mediaDevices.getUserMedia(constraints)
     recorder.addEventListener("stop", (e) => {
         // convert media chunks into video data
         let blob = new Blob(chunks, {type: "video/mp4"});
-        let videoURL = URL.createObjectURL(blob);
+        // let videoURL = URL.createObjectURL(blob);
 
-        let a = document.createElement("a");
-        a.href = videoURL;
-        a.download = "myrecording.mp4";
-        a.click();
+        if(database) {
+            let videoID = shortid();
+            let dbTransaction = database.transaction("video", "readwrite");
+            let videoStore = dbTransaction.objectStore("video");
+            let videoEntry = {
+                id: videoID,
+                blobData: blob
+            }
+            videoStore.add(videoEntry);
+        }
+
+        // let a = document.createElement("a");
+        // a.href = videoURL;
+        // a.download = "myrecording.mp4";
+        // a.click();
     })
 })
 
@@ -51,6 +63,36 @@ recordBtnContainer.addEventListener("click", (e) => {
         recordBtn.classList.remove("scale_record");
         stopTimer();
     }
+})
+
+captureBtnContainer.addEventListener("click", (e) => {
+    let canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    let tool = canvas.getContext('2d');
+    tool.drawImage(video, 0, 0, canvas.width, canvas.height);
+    //Filter
+    tool.fillStyle = transparentColor;
+    tool.fillRect(0, 0, canvas.width, canvas.height);
+
+    let imageURL = canvas.toDataURL();
+
+    if(database) {
+        let imageID = shortid();
+        let dbTransaction = database.transaction("image", "readwrite");
+        let imageStore = dbTransaction.objectStore("image");
+        let imageEntry = {
+            id: imageID,
+            imageData: imageURL
+        }
+        imageStore.add(imageEntry);
+    }
+
+    // let a  = document.createElement("a");
+    // a.href = imageURL;
+    // a.download = "image.jpg";
+    // a.click();
 })
 
 // Timer
@@ -85,3 +127,13 @@ function stopTimer() {
     clearInterval(timerID);
     timer.innerText = "00:00:00";
 }
+
+// Filtering Logic
+let filterLayer = document.querySelector(".filter_layer");
+let allFilter = document.querySelectorAll(".filter");
+allFilter.forEach((filterElem) => {
+    filterElem.addEventListener("click", (e) => {
+        transparentColor = getComputedStyle(filterElem).getPropertyValue("background-color");
+        filterLayer.style.backgroundColor = transparentColor;
+    })
+})
