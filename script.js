@@ -34,16 +34,11 @@ navigator.mediaDevices.getUserMedia(constraints)
             let dbTransaction = database.transaction("video", "readwrite");
             let videoStore = dbTransaction.objectStore("video");
             let videoEntry = {
-                id: videoID,
+                id: `vid-${videoID}`,
                 blobData: blob
             }
             videoStore.add(videoEntry);
         }
-
-        // let a = document.createElement("a");
-        // a.href = videoURL;
-        // a.download = "myrecording.mp4";
-        // a.click();
     })
 })
 
@@ -66,6 +61,7 @@ recordBtnContainer.addEventListener("click", (e) => {
 })
 
 captureBtnContainer.addEventListener("click", (e) => {
+    captureBtn.classList.add("scale_capture");
     let canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
@@ -83,16 +79,15 @@ captureBtnContainer.addEventListener("click", (e) => {
         let dbTransaction = database.transaction("image", "readwrite");
         let imageStore = dbTransaction.objectStore("image");
         let imageEntry = {
-            id: imageID,
+            id: `img-${imageID}`,
             imageData: imageURL
         }
         imageStore.add(imageEntry);
     }
 
-    // let a  = document.createElement("a");
-    // a.href = imageURL;
-    // a.download = "image.jpg";
-    // a.click();
+    setTimeout(() => {
+        captureBtn.classList.remove("scale_capture");
+    }, 500)
 })
 
 // Timer
